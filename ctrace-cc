@@ -1,0 +1,11 @@
+#!/bin/sh
+# ctrace-cc fichier.c [options gcc...]
+# Instrumente fichier.c puis le compile avec gcc ; s'arrête si ctrace échoue.
+#   ctrace-cc a.c -o a.out -Wall
+set -e
+[ $# -ge 1 ] || { echo "usage: ctrace-cc fichier.c [options gcc...]" >&2; exit 2; }
+src=$1; shift
+tmp=$(mktemp "${TMPDIR:-/tmp}/ctrace.XXXXXX.c")
+trap 'rm -f "$tmp"' EXIT
+"$(dirname "$0")/ctrace" "$src" > "$tmp"
+${CC:-gcc} -x c "$tmp" "$@"
