@@ -30,10 +30,12 @@ Indentation follows the call depth.
 
 ## Building
 
-Dependencies: Clang/LLVM 18 or later with headers (tested with LLVM 19). On Debian/Ubuntu:
+Dependencies: a C/C++ toolchain and Clang/LLVM 18 or later with headers
+(tested with LLVM 19). On Debian/Ubuntu:
 
 ```sh
-sudo apt install clang-19 libclang-19-dev llvm-19-dev
+sudo apt install build-essential                        # gcc, g++, make
+sudo apt install clang-19 libclang-19-dev llvm-19-dev   # Clang/LLVM + headers
 ```
 
 ```sh

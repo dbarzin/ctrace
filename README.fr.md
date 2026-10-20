@@ -30,10 +30,12 @@ L'indentation suit la profondeur d'appel.
 
 ## Construction
 
-Dépendances : Clang/LLVM 18 ou plus récent avec les en-têtes (testé avec LLVM 19). Sous Debian/Ubuntu :
+Dépendances : une chaîne de compilation C/C++ et Clang/LLVM 18 ou plus récent
+avec les en-têtes (testé avec LLVM 19). Sous Debian/Ubuntu :
 
 ```sh
-sudo apt install clang-19 libclang-19-dev llvm-19-dev
+sudo apt install build-essential                        # gcc, g++, make
+sudo apt install clang-19 libclang-19-dev llvm-19-dev   # Clang/LLVM + en-têtes
 ```
 
 ```sh
