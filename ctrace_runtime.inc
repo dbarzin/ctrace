@@ -8,12 +8,14 @@ static const char *CTraceRuntime = R"CTRT(/* ---- ctrace runtime ---- */
 __attribute__((weak)) int __ct_depth;
 __attribute__((weak)) int __ct_cv;
 __attribute__((weak)) FILE *__ct_fp;
-/* état de la ligne en cours : 0 normal, 1 avant le premier « // », 2 avant le
-   premier paramètre, 3 paramètres suivants */
+/* état de la ligne en cours : 0 normal, 1 avant la première variable lue
+   (ligne « :: » pas encore commencée), 2 avant le premier paramètre,
+   3 paramètres suivants */
 __attribute__((weak)) int __ct_st;
-__attribute__((weak)) int __ct_col; /* longueur du code de la ligne en cours */
 __attribute__((weak)) int __ct_lw;  /* largeur de la colonne « fichier:ligne » */
-#define __CT_COMMENT_COL 32
+/* instruction en attente : écrite par __ct_code après la ligne « :: » */
+__attribute__((weak)) const char *__ct_ploc;
+__attribute__((weak)) const char *__ct_pcode;
 static __attribute__((unused)) FILE *__ct_out(void) {
   if (!__ct_fp) {
     const char *p = getenv("CTRACE_OUT");
@@ -23,16 +25,20 @@ static __attribute__((unused)) FILE *__ct_out(void) {
   }
   return __ct_fp;
 }
-static __attribute__((unused)) void __ct_indent(void) {
+/* un « | » par niveau d'appel ; mark (« > » entrée, « < » sortie) remplace
+   celui du niveau courant */
+static __attribute__((unused)) void __ct_indent_mark(int mark) {
   int i; FILE *f = __ct_out();
-  for (i = 1; i < __ct_depth; i++) fputs("  ", f);
+  for (i = 1; i <= __ct_depth; i++) {
+    fputc(i == __ct_depth && mark ? mark : '|', f); fputc(' ', f);
+  }
 }
+static __attribute__((unused)) void __ct_indent(void) { __ct_indent_mark(0); }
+static __attribute__((unused)) void __ct_blank(void);
 static __attribute__((unused)) void __ct_name(const char *n) {
   FILE *f = __ct_out();
   if (__ct_st == 1) {
-    int i = __ct_col;
-    do fputc(' ', f); while (++i < __CT_COMMENT_COL);
-    fputs("//", f);
+    __ct_blank(); fputs("::", f);
   } else if (__ct_st == 2) {
     __ct_st = 3; fprintf(f, "%s=", n); return;
   } else if (__ct_st == 3) {
@@ -47,6 +53,9 @@ static __attribute__((unused)) int __ct_rec(void) {
 }
 static __attribute__((unused)) int __ct_rec_end(void) {
   __ct_st = 0; fputc('}', __ct_out()); return 0;
+}
+static __attribute__((unused)) void __ct_loc_mark(const char *loc, int mark) {
+  __ct_indent_mark(mark); __ct_lw = (int)strlen(loc); fprintf(__ct_out(), "%s ", loc);
 }
 static __attribute__((unused)) void __ct_loc(const char *loc) {
   __ct_indent(); __ct_lw = (int)strlen(loc); fprintf(__ct_out(), "%s ", loc);
@@ -120,13 +129,16 @@ static __attribute__((unused)) int __ct_arr(const char *n, const void *p, unsign
   fputc('}', f);
   return 0;
 }
-/* a.c:38   s = add(s, 2);              // s=0 */
+/*        :: s=0
+   a.c:38   s = add(s, 2); */
 static __attribute__((unused)) int __ct_pre(const char *loc, const char *code) {
-  __ct_loc(loc); fprintf(__ct_out(), "  %s", code);
-  __ct_col = 2 + (int)strlen(code); __ct_st = 1; return 0;
+  __ct_ploc = loc; __ct_pcode = code; __ct_lw = (int)strlen(loc);
+  __ct_st = 1; return 0;
 }
 static __attribute__((unused)) int __ct_code(void) {
-  __ct_st = 0; fputc('\n', __ct_out()); return 0;
+  if (__ct_st != 1) fputc('\n', __ct_out());
+  __ct_st = 0; __ct_loc(__ct_ploc); fprintf(__ct_out(), "  %s\n", __ct_pcode);
+  return 0;
 }
 /*            => s=2 */
 static __attribute__((unused)) int __ct_post(void) {
@@ -140,13 +152,13 @@ static __attribute__((unused)) int __ct_cond(int v) {
 }
 /* a.c:6    -> add(a=0, b=2) */
 static __attribute__((unused)) int __ct_enter(const char *loc, const char *fn) {
-  __ct_depth++; __ct_loc(loc); fprintf(__ct_out(), "-> %s(", fn); __ct_st = 2; return 0;
+  __ct_depth++; __ct_loc_mark(loc, '>'); fprintf(__ct_out(), "-> %s(", fn); __ct_st = 2; return 0;
 }
 static __attribute__((unused)) int __ct_args(void) {
   __ct_st = 0; fputs(")\n", __ct_out()); return 0;
 }
 static __attribute__((unused)) int __ct_ret(const char *loc, const char *fn) {
-  __ct_loc(loc); fprintf(__ct_out(), "<- %s", fn); __ct_st = 0; return 0;
+  __ct_loc_mark(loc, '<'); fprintf(__ct_out(), "<- %s", fn); __ct_st = 0; return 0;
 }
 static __attribute__((unused)) int __ct_leave(void) {
   fputc('\n', __ct_out()); __ct_depth--; return 0;

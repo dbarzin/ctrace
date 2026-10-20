@@ -14,19 +14,24 @@ CTRACE_OUT=trace.txt ./a.out         # trace dans un fichier
 ## Format de la trace
 
 ```
-demo.c:38   s = add(s, 2);                // s=0     code exécuté // état AVANT
-  demo.c:6  -> add(a=0, b=2)                         entrée de fonction + paramètres
-  demo.c:8    return a + b;               // a=0 b=2
-  demo.c:8  <- add = 2                               return + valeur
-          => s=2                                     état APRÈS (variables modifiées)
-demo.c:49   while (i < 3)                 // i=0
-          -> true                                    résultat de la condition
+> demo.c:30 -> main()
+|           :: s=0                         état AVANT (variables lues)
+| demo.c:38   s = add(s, 2);               code exécuté
+| > demo.c:6  -> add(a=0, b=2)             entrée de fonction + paramètres
+| |         :: a=0 b=2
+| | demo.c:8    return a + b;
+| < demo.c:8  <- add = 2                   return + valeur
+|           => s=2                         état APRÈS (variables modifiées)
+|           :: i=0
+| demo.c:49   while (i < 3)
+|           -> true                        résultat de la condition
 ```
 
-Le commentaire `//` n'apparaît que si l'instruction lit des variables, et la
-ligne `=>` que si elle en modifie.
+La ligne `::` n'apparaît que si l'instruction lit des variables, et la ligne
+`=>` que si elle en modifie.
 
-L'indentation suit la profondeur d'appel.
+L'indentation suit la profondeur d'appel : un `|` par niveau, `>` à l'entrée
+dans une fonction et `<` à sa sortie.
 
 ## Construction
 

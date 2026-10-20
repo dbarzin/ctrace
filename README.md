@@ -14,19 +14,24 @@ CTRACE_OUT=trace.txt ./a.out         # trace to a file
 ## Trace format
 
 ```
-demo.c:38   s = add(s, 2);                // s=0     executed code // state BEFORE
-  demo.c:6  -> add(a=0, b=2)                         function entry + parameters
-  demo.c:8    return a + b;               // a=0 b=2
-  demo.c:8  <- add = 2                               return + value
-          => s=2                                     state AFTER (modified variables)
-demo.c:49   while (i < 3)                 // i=0
-          -> true                                    result of the condition
+> demo.c:30 -> main()
+|           :: s=0                         state BEFORE (variables read)
+| demo.c:38   s = add(s, 2);               executed code
+| > demo.c:6  -> add(a=0, b=2)             function entry + parameters
+| |         :: a=0 b=2
+| | demo.c:8    return a + b;
+| < demo.c:8  <- add = 2                   return + value
+|           => s=2                         state AFTER (modified variables)
+|           :: i=0
+| demo.c:49   while (i < 3)
+|           -> true                        result of the condition
 ```
 
-The `//` comment only appears when the statement reads variables, and the `=>`
+The `::` line only appears when the statement reads variables, and the `=>`
 line only when it modifies some.
 
-Indentation follows the call depth.
+Indentation follows the call depth: one `|` per level, `>` on entering a
+function and `<` on leaving it.
 
 ## Building
 
