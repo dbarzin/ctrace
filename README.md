@@ -30,7 +30,11 @@ Indentation follows the call depth.
 
 ## Building
 
-Dependencies: Clang/LLVM 18 with headers (`libclang-18-dev`, `llvm-18-dev` on Debian/Ubuntu).
+Dependencies: Clang/LLVM 18 or later with headers (tested with LLVM 19). On Debian/Ubuntu:
+
+```sh
+sudo apt install clang-19 libclang-19-dev llvm-19-dev
+```
 
 ```sh
 make                 # builds ./ctrace
@@ -38,7 +42,9 @@ make test            # instruments and runs examples/demo.c
 make install         # /usr/local/bin/ctrace and ctrace-cc
 ```
 
-Other LLVM version: `make LLVM_CONFIG=llvm-config-19 CLANG=clang-19`.
+The Makefile uses `llvm-config` if it is in the `PATH`, otherwise the most recent
+`/usr/bin/llvm-config-NN`, and the `clang` of the same installation. To force a
+version: `make LLVM_CONFIG=llvm-config-19`.
 
 Options after the file are passed to Clang: `ctrace a.c -Iinclude -DDEBUG`.
 
@@ -57,7 +63,8 @@ Options after the file are passed to Clang: `ctrace a.c -Iinclude -DDEBUG`.
 Display depends on the type (decided at instrumentation time from the AST):
 integers, `enum`, `bool`, `char`, floating point, pointers (address), fixed-size
 arrays (first 8 elements), `char` arrays (bounded string), `struct` one level
-deep, `union` (first member).
+deep, `union` (first member). Struct variables are shown field by field
+(`pt.x=1 pt.y=2`), a returned struct in braces (`<- move = {x=11, y=2}`).
 
 ## How it works
 

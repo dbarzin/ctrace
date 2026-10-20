@@ -30,7 +30,11 @@ L'indentation suit la profondeur d'appel.
 
 ## Construction
 
-Dépendances : Clang/LLVM 18 avec les en-têtes (`libclang-18-dev`, `llvm-18-dev` sous Debian/Ubuntu).
+Dépendances : Clang/LLVM 18 ou plus récent avec les en-têtes (testé avec LLVM 19). Sous Debian/Ubuntu :
+
+```sh
+sudo apt install clang-19 libclang-19-dev llvm-19-dev
+```
 
 ```sh
 make                 # produit ./ctrace
@@ -38,7 +42,9 @@ make test            # instrumente et exécute examples/demo.c
 make install         # /usr/local/bin/ctrace et ctrace-cc
 ```
 
-Autre version de LLVM : `make LLVM_CONFIG=llvm-config-19 CLANG=clang-19`.
+Le Makefile utilise `llvm-config` s'il est dans le `PATH`, sinon le
+`/usr/bin/llvm-config-NN` le plus récent, et le `clang` de la même installation.
+Pour imposer une version : `make LLVM_CONFIG=llvm-config-19`.
 
 Les options après le fichier sont passées à Clang : `ctrace a.c -Iinclude -DDEBUG`.
 
@@ -57,7 +63,9 @@ Les options après le fichier sont passées à Clang : `ctrace a.c -Iinclude -DD
 Affichage selon le type (décidé à l'instrumentation à partir de l'AST) :
 entiers, `enum`, `bool`, `char`, flottants, pointeurs (adresse), tableaux de
 taille fixe (8 premiers éléments), tableaux de `char` (chaîne bornée),
-`struct` sur un niveau, `union` (premier membre).
+`struct` sur un niveau, `union` (premier membre). Les variables `struct` sont
+affichées champ par champ (`pt.x=1 pt.y=2`), une `struct` retournée entre
+accolades (`<- move = {x=11, y=2}`).
 
 ## Principe
 
